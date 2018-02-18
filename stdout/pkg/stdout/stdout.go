@@ -16,7 +16,7 @@ var (
 // Init the component
 func Init(configSocketURL string, reportSocketURL string, dstreamURL string, dstreamTransportType string) {
 	c, err = cbp.NewComponent("stdout")
-	fmt.Printf("INFO: new component created: %s\n", c.Name())
+	// fmt.Printf("INFO: new component created: %s\n", c.Name())
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -32,7 +32,7 @@ func Run() {
 	c.Run()
 	for {
 		msg := c.Recv()
-		fmt.Printf("MSGPACKED: %s\n", msg)
+		// fmt.Printf("MSGPACKED: %s\n", msg)
 		//
 		//
 		//

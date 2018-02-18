@@ -21,7 +21,7 @@ var (
 // Init is called to initialize the component.
 func Init(configSocketURL string, reportSocketURL string, dstreamURL string, dstreamTransportType string) {
 	c, err = cbp.NewComponent("stdin")
-	fmt.Printf("INFO: new component created: %s\n", c.Name())
+	// fmt.Printf("INFO: new component created: %s\n", c.Name())
 	if err != nil {
 		panic(err.Error())
 	}
