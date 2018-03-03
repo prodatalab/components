@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	"github.com/prodatalab/cbp"
-	msg "github.com/prodatalab/messages"
+	ba "github.com/prodatalab/msg/bytearray"
 )
 
 var (
 	c   *cbp.Component
 	err error
-	b   msg.ByteArray
+	msg []byte
 )
 
 // Init the component
@@ -30,15 +30,16 @@ func Init(configSocketURL string, reportSocketURL string, dstreamURL string, dst
 // Run this component
 func Run() {
 	c.Run()
+	b := ba.ByteArray{}
 	for {
 		msg := c.Recv()
 		// fmt.Printf("MSGPACKED: %s\n", msg)
 		//
 		//
 		//
-		b.Unpack(msg)
+		b.UnmarshalMsg(msg)
 		if b.Value != nil {
-			fmt.Println(string(b.Value))
+			fmt.Println("Value:", string(b.Value))
 		} else {
 			fmt.Println("Where is my value?")
 		}
