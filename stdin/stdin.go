@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/prodatalab/messages"
-
 	"github.com/prodatalab/cbp"
+	ba "github.com/prodatalab/msg/bytearray"
 )
 
 var (
 	c   *cbp.Component
 	err error
-	ba  []byte
+	msg []byte
 )
 
 // c.AddSocket("to-stdout", "push", "tcp", "tcp://127.0.0.1:5555")
@@ -38,17 +37,19 @@ func Run() {
 		fmt.Printf("ERROR: In stdin Run(): %s", err.Error())
 		os.Exit(1)
 	}
-	b := &msg.ByteArray{}
+	b := ba.ByteArray{}
+	b.Version = 1
+	b.Type = 1
 	for scanner.Scan() {
 		b.Value = []byte(scanner.Text())
 		if scanner.Err() != nil {
 			panic(scanner.Err().Error())
 		}
-		ba, err = b.Pack()
+		msg, err = b.MarshalMsg(nil)
 		if err != nil {
 			panic(err)
 		}
-		c.Send(ba)
+		c.Send(msg)
 	}
 	if scanner.Err() != nil {
 		fmt.Println(scanner.Err().Error())
