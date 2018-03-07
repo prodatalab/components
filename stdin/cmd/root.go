@@ -25,22 +25,20 @@ import (
 )
 
 var (
-	cfgFile              string
-	configSocketURL      string
-	reportSocketURL      string
-	dstreamSocketURL     string
-	dstreamTransportType string
+	cfgFile    string
+	urlStrings []string
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "stdin",
 	Short: "A component of CodeDepot's component-based programming platform",
-	Long: `    
+	Long: `    var blank = []string{}
+
 	stdin is a "source" component and accepts input from the terminal shell. 
         It then continually sends the input to downstream components.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		stdin.Init(configSocketURL, reportSocketURL, dstreamSocketURL, dstreamTransportType)
+		stdin.Init(urlStrings)
 		stdin.Run()
 		// stdin.Stop()
 	},
@@ -58,10 +56,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "configFile", "f", "$HOME/.config/cbp/stdin.yaml", "config file location")
-	rootCmd.PersistentFlags().StringVarP(&configSocketURL, "configURL", "c", "127.0.0.1:5555", "URL with portfor the upstream configuration service")
-	rootCmd.PersistentFlags().StringVarP(&reportSocketURL, "reportURL", "r", "127.0.0.1:6666", "URL for the downstream reporting service")
-	rootCmd.PersistentFlags().StringVarP(&dstreamSocketURL, "dstreamURL", "d", "127.0.0.1:7777", "URL for the downstream component service")
-	rootCmd.PersistentFlags().StringVarP(&dstreamTransportType, "dstreamTransportType", "t", "tcp", "transport type")
+	rootCmd.PersistentFlags().StringArrayVarP(&urlStrings, "socket", "s", []string{}, "Use the form: <tcp|ipc|inproc>://localhost:5555?type=<req|rep|push|pull|pub|sub>")
 }
 
 // initConfig reads in config file and ENV variables if set.
