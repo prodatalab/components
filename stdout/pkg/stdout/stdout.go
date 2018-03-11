@@ -3,6 +3,8 @@ package stdout
 import (
 	"fmt"
 
+	"github.com/onrik/logrus/filename"
+	"github.com/pkg/errors"
 	"github.com/prodatalab/cbp"
 	ba "github.com/prodatalab/msg/bytearray"
 	"github.com/sirupsen/logrus"
@@ -12,47 +14,60 @@ const (
 	name = "stdout"
 )
 
+// Value blah
+type Value struct {
+	Sockets []string
+}
+
 var (
+	// Val blah
+	Val = Value{}
 	c   *cbp.Component
 	err error
 	msg []byte
 	log = logrus.New()
 )
 
-// log.Level = logrus.DebugLevel
-
-// Init the component
-func Init(urlStrings []string) {
+func initialize() error {
+	logrus.AddHook(filename.NewHook())
+	// log.Level = logrus.DebugLevel
 	c, err = cbp.NewComponent(name)
 	if err != nil {
-		log.Panic(err)
+		return errors.Wrap(err, "NewComponent failed")
 	}
-	for _, u := range urlStrings {
+	log.Info("stdout component created")
+	for _, u := range Val.Sockets {
 		err = c.AddSocket(u)
 		if err != nil {
-			log.Panic(err)
+			return errors.Wrap(err, "AddSocket failed")
 		}
 	}
-	log.Info("stdout component created", "\n")
+	return nil
 }
 
 // Run this component
 func Run() {
-
+	err = initialize()
+	if err != nil {
+		log.Fatal("initialize failed", err)
+	}
 	err = c.Run()
 	if err != nil {
-		log.Panic(err)
+		log.Fatal("Run failed", err)
 	}
 	b := ba.ByteArray{}
 	b.Version = 1
 	b.Type = 1
 	for {
 		msg := c.Recv()
-		b.UnmarshalMsg(msg)
-		if b.Value != nil {
-			fmt.Println(string(b.Value))
-		} else {
-			log.Panic("b.Value is nil")
+		b.Value, err = b.UnmarshalMsg(msg)
+		if err != nil {
+			log.Error("UnmarshalMsg failed", err)
+			continue
 		}
+		if b.Value == nil {
+			log.Warn("received Value is nil")
+		}
+		fmt.Println(string(b.Value))
 	}
 }

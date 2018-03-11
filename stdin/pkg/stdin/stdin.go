@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/onrik/logrus/filename"
+	"github.com/pkg/errors"
 	"github.com/prodatalab/cbp"
 	ba "github.com/prodatalab/msg/bytearray"
 	"github.com/sirupsen/logrus"
@@ -14,34 +16,47 @@ const (
 	name = "stdin"
 )
 
+// Value blah
+type Value struct {
+	Sockets []string
+}
+
 var (
+	// Val blah
+	Val = Value{}
 	c   *cbp.Component
 	err error
 	msg []byte
 	log = logrus.New()
 )
 
-// log.Level = logrus.DebugLevel
-
-// Init is called to initialize the component.
-func Init(urlStrings []string) {
+func initialize() error {
+	logrus.AddHook(filename.NewHook())
+	// log.Level = logrus.DebugLevel
 	c, err = cbp.NewComponent(name)
 	if err != nil {
-		log.Panic(err)
+		return errors.Wrap(err, "NewComponent failed")
 	}
-	for _, u := range urlStrings {
-		c.AddSocket(u)
+	log.Info("stdin component created")
+	for _, u := range Val.Sockets {
+		err = c.AddSocket(u)
+		if err != nil {
+			return errors.Wrap(err, "AddSocket failed")
+		}
 	}
-	log.Info("stdin component created", "\n")
+	return nil
 }
 
 // Run this component
 func Run() {
-
+	err = initialize()
+	if err != nil {
+		log.Fatal("initialize failed", err)
+	}
 	scanner := bufio.NewScanner(os.Stdin)
 	err = c.Run()
 	if err != nil {
-		log.Panic(err)
+		log.Fatal("Run failed", err)
 	}
 	b := ba.ByteArray{}
 	b.Version = 1
@@ -51,11 +66,13 @@ func Run() {
 		fmt.Printf("\nstdin:> ")
 		b.Value = []byte(scanner.Text())
 		if scanner.Err() != nil {
-			log.Panic(err)
+			log.Error("scanner failed", err)
+			continue
 		}
 		msg, err = b.MarshalMsg(nil)
 		if err != nil {
-			log.Panic(err)
+			log.Error("MarshalMsg failed", err)
+			continue
 		}
 		c.Send(msg)
 	}

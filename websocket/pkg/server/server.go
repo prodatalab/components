@@ -1,10 +1,13 @@
 package server
 
 import (
+	"io"
 	"net/http"
 	"net/url"
 
 	ws "github.com/gorilla/websocket"
+	"github.com/onrik/logrus/filename"
+	"github.com/pkg/errors"
 	"github.com/prodatalab/cbp"
 	ba "github.com/prodatalab/msg/bytearray"
 	"github.com/sirupsen/logrus"
@@ -35,43 +38,55 @@ var (
 	addr     *url.URL
 )
 
-// log.Level = logrus.DebugLevel
-
-func initialize() {
-
+func initialize() error {
+	logrus.AddHook(filename.NewHook())
+	// log.Level = logrus.DebugLevel
 	c, err = cbp.NewComponent(name)
 	if err != nil {
-		log.Fatal(err)
+		return errors.Wrap(err, "NewComponent failed")
 	}
 	log.Info("cbp component created")
 	for _, u := range Val.Sockets {
-		c.AddSocket(u)
+		err = c.AddSocket(u)
+		if err != nil {
+			return errors.Wrap(err, "AddSocket failed")
+		}
 	}
 	addr, err = url.Parse(Val.WSURL)
 	if err != nil {
-		log.Fatal(err)
+		return errors.Wrap(err, "Parse failed")
 	}
 	http.HandleFunc("/", home)
 	if err != nil {
-		log.Error(err)
+		return errors.Wrap(err, "HandleFunc failed")
 	}
+	return nil
 }
 
 // Run blah
-func Run() {
-	initialize()
-	c.Run()
+func Run() error {
+	err = initialize()
+	if err != nil {
+		return errors.Wrap(err, "initialize failed")
+	}
+	err = c.Run()
+	if err != nil {
+		return errors.Wrap(err, "Run failed")
+	}
 	log.Info("websocket server created")
-	log.Fatal(http.ListenAndServe(addr.Host, nil))
+	err = http.ListenAndServe(addr.Host, nil)
+	if err != nil {
+		return errors.Wrap(err, "ListenAndServe failed")
+	}
+	return nil
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
 	conn, err = upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Error(err)
-		return
+		log.Fatal("Upgrade failed", err)
 	}
-	defer conn.Close()
+	defer Close(conn)
 	go func() {
 		b := ba.ByteArray{}
 		b.Version = 1
@@ -81,14 +96,14 @@ func home(w http.ResponseWriter, r *http.Request) {
 			cnt++
 			mt, msg, err = conn.ReadMessage()
 			if err != nil {
-				log.Error(err)
-				break
+				log.Error("ReadMessage failed", err)
+				continue
 			}
 			b.Value = msg
 			msg, err = b.MarshalMsg(nil)
 			if err != nil {
-				log.Error(err)
-				break
+				log.Error("MarshalMsg failed", err)
+				continue
 			}
 			c.Send(msg)
 		}
@@ -98,13 +113,26 @@ func home(w http.ResponseWriter, r *http.Request) {
 	b.Type = 1
 	for {
 		msg := c.Recv()
-		b.UnmarshalMsg(msg)
-		if b.Value != nil {
-			err = conn.WriteMessage(ws.TextMessage, b.Value)
-			if err != nil {
-				log.Error(err)
-				return
-			}
+		b.Value, err = b.UnmarshalMsg(msg)
+		if err != nil {
+			log.Error("UnmarshalMsg failed", err)
+			continue
 		}
+		if b.Value == nil {
+			log.Warn("Value returned is nil")
+			continue
+		}
+		err = conn.WriteMessage(ws.TextMessage, b.Value)
+		if err != nil {
+			log.Error("WriteMessage failed", err)
+		}
+	}
+}
+
+// Close handles deferred Close funcs that return an error
+func Close(c io.Closer) {
+	err := c.Close()
+	if err != nil {
+		log.Fatal(err, "Close failed")
 	}
 }

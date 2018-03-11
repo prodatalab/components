@@ -25,8 +25,7 @@ import (
 )
 
 var (
-	cfgFile    string
-	urlStrings []string
+	cfgFile string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -38,9 +37,7 @@ var rootCmd = &cobra.Command{
 	stdin is a "source" component and accepts input from the terminal shell. 
         It then continually sends the input to downstream components.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		stdin.Init(urlStrings)
 		stdin.Run()
-		// stdin.Stop()
 	},
 }
 
@@ -56,7 +53,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "configFile", "f", "$HOME/.config/cbp/stdin.yaml", "config file location")
-	rootCmd.PersistentFlags().StringArrayVarP(&urlStrings, "socket", "s", []string{}, "Use the form: <tcp|ipc|inproc>://localhost:5555?type=<req|rep|push|pull|pub|sub>")
+	rootCmd.PersistentFlags().StringArrayVarP(&stdin.Val.Sockets, "socket", "s", []string{}, "Use the form: <tcp|ipc|inproc>://localhost:5555?type=<req|rep|push|pull|pub|sub>")
 }
 
 // initConfig reads in config file and ENV variables if set.

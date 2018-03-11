@@ -25,8 +25,7 @@ import (
 )
 
 var (
-	cfgFile    string
-	urlStrings []string
+	cfgFile string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -36,9 +35,7 @@ var rootCmd = &cobra.Command{
 	Long: `    
 	stdout is a "sink" component and accepts input that prints to the terminal shell.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		stdout.Init(urlStrings)
 		stdout.Run()
-		// stdin.Stop()
 	},
 }
 
@@ -54,7 +51,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "configFile", "f", "$HOME/.config/cbp/stdin.yaml", "config file location")
-	rootCmd.PersistentFlags().StringArrayVarP(&urlStrings, "sockets", "s", []string{}, "Use the form: <tcp|ipc|inproc>://localhost:5555?type=<req|rep|push|pull|pub|sub>")
+	rootCmd.PersistentFlags().StringArrayVarP(&stdout.Val.Sockets, "sockets", "s", []string{}, "Use the form: <tcp|ipc|inproc>://localhost:5555?type=<req|rep|push|pull|pub|sub>")
 }
 
 // initConfig reads in config file and ENV variables if set.
