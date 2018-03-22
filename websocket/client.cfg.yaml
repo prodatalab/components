@@ -1,0 +1,24 @@
+# <tcp|ipc|inproc>://localhost:5555?type=<req|rep|push|pull|pub|sub>
+
+sockets:
+  - type: pull
+    protocol: tcp
+    host: localhost
+    port: 5555
+
+  - type: push
+    protocol: tcp
+    host: localhost
+    port: 5556
+
+host_url: wss://ws-feed.gdax.com
+
+# path:
+
+# params:
+
+# headers:
+#   - key:
+#     value:|
+
+
