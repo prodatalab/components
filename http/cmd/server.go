@@ -11,32 +11,28 @@ import (
 	"os"
 
 	"github.com/prodatalab/cobra"
-	"github.com/prodatalab/components/websocket/pkg/server"
+	"github.com/prodatalab/components/http/pkg/server"
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
-
 var serverCmd = &cobra.Command{
 	Use:   "server",
-	Short: "A websocket server component",
-	Long:  `A websocket server component`,
+	Short: "An http server component",
+	Long:  `An http server component`,
 	Run: func(cmd *cobra.Command, args []string) {
-		server.Run()
+		server.Run
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
 	cobra.OnInitialize(serverConfig)
-	serverCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $PWD/server.yaml)")
-
-	serverCmd.Flags().StringP("insocket", "i", "tcp://localhost:5555?type=pull", "the addr/type of the in socket")
-	serverCmd.Flags().StringP("outsocket", "o", "tcp://localhost:5556?type=push", "the addr/type of the out socket")
-	serverCmd.Flags().StringP("wsurl", "w", "ws://localhost:8080", "The websocket address to bind")
-
-	viper.BindPFlags(clientCmd.Flags)
-	viper.SetDefault("wsurl", "http://localhost:8080")
+	serverCmd.Flags().StringVarP(&cfgFile, "config", "c", "${PWD}/server.yaml", "config file (default is $PWD/server.yaml)")
+	serverCmd.Flags().StringP("url", "u", "http://localhost:8080", "the http server addr to bind to")
+	serverCmd.Flags().StringP("insocket", "i", "tcp://localhost:5555?type=pull")
+	serverCmd.Flags().StringP("outsocket", "o", "tcp://localhost:5556?type=push")
+	viper.BindPFlags(serverCmd.Flags())
+	viper.SetDefault("url", "http://localhost:8080")
 	viper.SetDefault("insocket", "tcp://localhost:5555?type=pull")
 	viper.SetDefault("outsocket", "tcp://localhost:5556?type=push")
 }
